@@ -1,0 +1,16 @@
+version: '3'
+services:
+  jwt:
+    image: jwt:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    networks:
+      - login
+networks:
+  login:
+    external: true
