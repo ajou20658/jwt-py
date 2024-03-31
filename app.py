@@ -17,13 +17,11 @@ HEADER = 'Authorization'
 logging.getLogger().setLevel(logging.DEBUG)
 
 ### DB연결 - mysql
-# MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE',default='oauth2')
-# MYSQL_USERNAME = os.environ.get('MYSQL_USERNAME',default='login')
-MYSQL_USERNAME = 'login'
+MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE',default='oauth2')
+MYSQL_USERNAME = os.environ.get('MYSQL_USERNAME',default='login')
 MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD',default='password')
-# MYSQL_HOST = 'mysql-login'
-MYSQL_HOST = 'localhost'
-SQL_URL = "mysql+pymysql://login:"+MYSQL_PASSWORD+"@"+MYSQL_HOST+"/oauth2"
+MYSQL_HOST = os.environ.get('MYSQL_HOST',default='localhost')
+SQL_URL = "mysql+pymysql://"+MYSQL_USERNAME+":"+MYSQL_PASSWORD+"@"+MYSQL_HOST+"/"+MYSQL_DATABASE
 
 Base = declarative_base()
 engine = create_engine(SQL_URL,echo=True)
