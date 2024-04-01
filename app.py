@@ -5,10 +5,13 @@ from sqlalchemy import create_engine,Table, MetaData,insert,delete,update
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from func import token_issue,validate_token,jwt_to_payload,blacklist_refresh_token
+from dotenv import load_dotenv
 
 import os
 import logging
 import redis
+
+load_dotenv()
 
 app = Flask(__name__)
 api = Api(app, version='1.0', title='API문서', description='JWT API 소개', doc="/api-docs")
@@ -39,21 +42,26 @@ r=redis.Redis(host=REDIS_HOST,port=6379,db=0)
 
 
 ### JWT 발급 로직
-issue = api.namespace('issue', description = 'JWT 발급')
+jwt = api.namespace('jwt', description = 'JWT 발급')
 
 user_parser = reqparse.RequestParser()
 user_parser.add_argument('userName', required=True, help="cannot be blank")
 user_parser.add_argument('userId', required=True, help="cannot be blank")
-user_parser.add_argument('userAuthorities', required=True, help="cannot be blank")
+user_parser.add_argument('authorities', required=True, help="cannot be blank")
 
-@issue.route()
+@jwt.route('/issue')
 class token_request(Resource):
-    @issue.expect(user_parser)
+    @jwt.expect(user_parser)
     def get(self):
         """JWT 발급"""
-        userName = request.args.get('userName')
-        authorities = request.args.get('authorities')
-        userId = request.args.get('userId')
+        args = user_parser.parse_args()
+        logging.info(args)
+        userName = args['userName']
+        authorities = args['authorities']
+        userId = args['userId']
+        logging.info(userName)
+        logging.info(authorities)
+        logging.info(userId)
         if not all([userName,authorities,userId]):
             return jsonify({"error": "Missing parameters"}),400
 
@@ -62,14 +70,14 @@ class token_request(Resource):
         return jsonify({"accessToken":token,"refreshToken":refresh})
 
 ### JWT 재발급 로직
-refresh = api.namespace('reissue', description = 'JWT 재발급')
+# refresh = api.namespace('reissue', description = 'JWT 재발급')
 
 refresh_parser = reqparse.RequestParser()
 refresh_parser.add_argument("Authorization", help="Bearer {refresh_token}", type=str, required=True,location="headers",default="Bearer ")
 
-@refresh.route()
+@jwt.route('/reissue')
 class token_reissue(Resource):
-    @refresh.expect(refresh_parser)
+    @jwt.expect(refresh_parser)
     def get(self):
         """유효한 refresh토큰으로 JWT 재발급"""
         header = request.headers.get('Authorization')
@@ -99,17 +107,17 @@ class token_reissue(Resource):
             return jsonify({"error":"유효하지 않은 토큰(4)"}),400
 
 ### JWT 만료 로직
-logout = api.namespace('logout', description = '만료')
+# logout = api.namespace('logout', description = '만료')
 
 resource_parser = reqparse.RequestParser()
 resource_parser.add_argument("Authorization", help="Bearer {access_token}", type=str, required=True,location="headers",default="Bearer ")
 
 # @app.route("/jwt/logout",methods=["POST"])
 # @cross_origin(allow_headers=['Authorization'])
-@logout.route()
+@jwt.route('/logout')
 class logout(Resource):
     """유효한 access토큰을 만료시킴"""
-    @logout.expect(resource_parser)
+    @jwt.expect(resource_parser)
     def post(self):
         # if request.method == 'OPTIONS':
         #     return build_preflight_response()

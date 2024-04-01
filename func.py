@@ -16,6 +16,7 @@ def blacklist_refresh_token(refresh,expiration_time):
 
 def jwt_to_payload(token):
     try:
+        logging.info(SECRET_KEY)
         decoded = jwt.decode(token,SECRET_KEY,algorithms='HS512')
         return decoded
     except jwt.ExpiredSignatureError:
@@ -27,7 +28,7 @@ def jwt_to_payload(token):
 
 def validate_token(token):
     try:
-        jwt.decode(token,SECRET_KEY,algorithms='HS512')
+        jwt.decode(token,SECRET_KEY,algorithms='HS256')
         return True
     except jwt.ExpiredSignatureError:
         logging.info("만료")
@@ -49,6 +50,7 @@ def token_issue(userId,userName,authorities):
         'auth': authorities,
         'exp': datetime.datetime.now() + datetime.timedelta(seconds=REFRESH)
     }
-    token = jwt.encode(access,SECRET_KEY,algorithm="HS512")
-    refreshToken = jwt.encode(refresh,SECRET_KEY,algorithm="HS512")
+    logging.info(SECRET_KEY)
+    token = jwt.encode(access,SECRET_KEY,algorithm="HS256")
+    refreshToken = jwt.encode(refresh,SECRET_KEY,algorithm="HS256")
     return token,refreshToken
